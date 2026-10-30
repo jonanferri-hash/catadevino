@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a0f14">
+<title>Cata de vinos</title>
+<style>
+:root{--bg:#1a0f14;--card:#2a1820;--line:#3d2630;--text:#f6eee9;--muted:#b9a39c;--wine:#9e2a3a;--wine2:#c94a5c;--gold:#e0b45a;--ok:#5fb38a}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 60px}
+h1{font-size:26px;margin:8px 0 4px;letter-spacing:-.3px}
+h2{font-size:15px;color:var(--muted);font-weight:600;margin:22px 0 10px;text-transform:uppercase;letter-spacing:.5px}
+.sub{color:var(--muted);margin:0 0 18px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.tap{cursor:pointer}
+.tap:active{transform:scale(.99)}
+input[type=text],textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#1f1217;color:var(--text);font:inherit;font-size:16px;outline:none;resize:none}
+input[type=text]:focus,textarea:focus{border-color:var(--wine2)}
+button{font:inherit;border:0;border-radius:12px;padding:14px 16px;font-size:16px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+.btn-sm{padding:9px 12px;font-size:14px}
+.primary{background:var(--wine);color:#fff}
+.gold{background:var(--gold);color:#2a1820}
+.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.del{background:#3a1a1f;color:#ff9a9a}
+.wide{width:100%;margin-top:10px}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.people button{background:var(--card);color:var(--text);border:1px solid var(--line);padding:16px 8px;font-size:17px}
+.people button.taken{color:var(--muted);font-weight:400}
+.people button small{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px}
+.tabs{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:6px;padding:10px 0;margin-bottom:6px}
+.tabs button{flex:1;background:var(--card);color:var(--muted);border:1px solid var(--line);padding:12px 8px}
+.tabs button.on{background:var(--wine);color:#fff;border-color:var(--wine)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.name{font-size:18px;font-weight:700}
+.wine{color:var(--muted);font-size:14px;margin-top:2px}
+.score{font-size:30px;font-weight:800;min-width:64px;text-align:right;font-variant-numeric:tabular-nums}
+.score.empty{color:var(--line)}
+input[type=range]{width:100%;margin:14px 0 4px;accent-color:var(--wine2);height:28px}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px}
+.badge{display:inline-block;font-size:12px;padding:3px 8px;border-radius:99px;background:#20372c;color:var(--ok);margin-top:6px}
+.live{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--wine);color:#fff;margin-bottom:8px}
+.actions{display:flex;gap:8px;margin-top:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+.rank{display:flex;gap:12px;align-items:center}
+.pos{font-size:22px;width:34px;text-align:center;font-weight:800;color:var(--muted)}
+.bar{height:6px;border-radius:6px;background:#1f1217;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--wine),var(--gold))}
+.meta{font-size:13px;color:var(--muted);margin-top:4px}
+.first{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.current{border-color:var(--wine2);box-shadow:0 0 0 1px var(--wine2) inset}
+.center{text-align:center}
+.hidden{display:none!important}
+.big{font-size:40px;font-weight:800;font-variant-numeric:tabular-nums}
+.cand{font-size:34px;font-weight:800;margin:6px 0 2px}
+.note{font-size:13px;color:var(--gold);margin:0 0 12px}
+.count{font-size:14px;color:var(--muted);margin-top:10px}
+.count.full{color:var(--ok);font-weight:700}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--line)}
+.arow:first-child{border-top:0}
+.arow .btns{display:flex;gap:6px;flex-shrink:0}
+.hist{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:15px}
+.hist:first-child{border-top:0}
+.msg{padding:12px 0;border-top:1px solid var(--line)}
+.msg:first-child{border-top:0}
+.msg .txt{margin-top:4px;font-size:16px;line-height:1.35;white-space:pre-wrap;word-break:break-word}
+/* Ficha de un vino */
+#sheet{position:fixed;inset:0;z-index:30;background:rgba(10,5,8,.7);display:flex;align-items:flex-end;justify-content:center}
+#sheet .panel{background:var(--bg);border:1px solid var(--line);border-bottom:0;border-radius:20px 20px 0 0;width:100%;max-width:560px;max-height:85vh;overflow:auto;padding:18px 16px 30px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ok);color:#06140d;padding:10px 16px;border-radius:99px;font-weight:700;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:40}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🍷 Cata de vinos</h1>
+  <p class="sub" id="subtitle">Cargando…</p>
+
+  <!-- Elegir quién eres -->
+  <section id="pickView" class="hidden">
+    <p class="meta" style="margin-bottom:12px">¿Quién eres? Elige tu nombre. Este móvil quedará vinculado a ti.</p>
+    <div class="people" id="peopleGrid"></div>
+  </section>
+
+  <!-- App -->
+  <section id="appView" class="hidden">
+    <div class="tabs">
+      <button id="tabVote" class="on">Votar</button>
+      <button id="tabRank">Vinos</button>
+      <button id="tabAdmin" class="hidden">Admin</button>
+    </div>
+
+    <div id="voteView">
+      <div id="voteNow"></div>
+      <div class="card">
+        <div class="row">
+          <div><div class="wine">Tu vino</div><div class="name" id="myWine">—</div></div>
+          <button class="btn-sm ghost" id="editWineBtn">Editar</button>
+        </div>
+      </div>
+      <div id="historyBox" class="hidden">
+        <h2>Tus notas</h2>
+        <div class="card" id="historyList"></div>
+      </div>
+    </div>
+
+    <div id="rankView" class="hidden">
+      <p class="note hidden" id="adminPeek">👀 El ranking está oculto. Solo tú ves las notas.</p>
+      <div id="rankList"></div>
+    </div>
+
+    <div id="adminView" class="hidden">
+      <div class="card center" id="adminNow"></div>
+      <div class="card center">
+        <div class="big" id="adminCount">0/22</div>
+        <div class="wine">conectados</div>
+        <div class="meta" id="adminVotes"></div>
+        <div class="actions" style="margin-top:14px"><button class="btn-sm gold" id="revealBtn"></button></div>
+      </div>
+      <h2>Vinos y participantes</h2>
+      <div class="card" id="adminList"></div>
+      <div class="center"><button class="btn-sm del" id="resetBtn">Borrar todos los datos</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap" id="adminLogin" style="padding-top:0">
+  <div class="center"><button class="btn-sm ghost" id="adminToggle" style="border:0">🔑 Acceso admin</button></div>
+  <div class="card hidden" id="adminForm">
+    <div class="wine">Contraseña de admin</div>
+    <div class="actions" style="flex-wrap:nowrap">
+      <input type="password" id="adminPass" autocomplete="off" style="flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:#1f1217;color:var(--text);font-size:16px;outline:none">
+      <button class="btn-sm primary" id="adminGo">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="sheet" class="hidden"><div class="panel" id="sheetPanel"></div></div>
+<div class="toast" id="toast">Guardado ✓</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, onSnapshot, arrayUnion,
+         serverTimestamp, writeBatch, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* ====== 1) CONFIG DE FIREBASE (proyecto cata-de-vino-969bf) ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBKaa6okr5eu34JPuBl9CaDFYt3vS3pWs8",
+  authDomain: "cata-de-vino-969bf.firebaseapp.com",
+  projectId: "cata-de-vino-969bf",
+  storageBucket: "cata-de-vino-969bf.firebasestorage.app",
+  messagingSenderId: "725669111494",
+  appId: "1:725669111494:web:4f6a3e2d6038bbc413d9c7"
+};
+/* ====== 2) CONTRASEÑA DE ADMIN (se pide en "🔑 Acceso admin") ====== */
+const ADMIN_KEY = "admin1";
+/* ====== 3) PARTICIPANTES ====== */
+const NAMES = ["Jon","Julia","Carlos","Gonza","Lidia","Laura","Marcos","José","Olesya","Sandra","Lucy",
+               "Flory","César","Lucas","Karen","Santi","Denisse","Martina","Ali","Stefy","Óscar","Joaquín"];
+/* ============================================================= */
+
+const slug = s => s.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const PEOPLE = NAMES.map(name => ({ id: slug(name), name })).sort((a,b) => a.name.localeCompare(b.name,"es"));
+const NAME = Object.fromEntries(PEOPLE.map(p => [p.id, p.name]));
+const TOTAL = PEOPLE.length;
+const MSG_MAX = 140;
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const P = "cata_participants", V = "cata_votes", C = "cata_config";
+const STATE = doc(db, C, "state");
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt = n => n.toFixed(1).replace(".", ",");
+const store = {
+  get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k,v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k,v); } catch {} }
+};
+
+let isAdmin = store.get("cata_admin") === "1";
+
+/* ---------- Acceso admin ---------- */
+$("adminToggle").addEventListener("click", () => { $("adminForm").classList.toggle("hidden"); $("adminPass").focus(); });
+function tryAdmin(){
+  if ($("adminPass").value.trim() !== ADMIN_KEY) { $("adminPass").value = ""; toast("Contraseña incorrecta"); return; }
+  isAdmin = true; store.set("cata_admin", "1");
+  $("adminPass").value = ""; $("adminForm").classList.add("hidden");
+  toast("Modo admin activado 🔑"); route();
+}
+$("adminGo").addEventListener("click", tryAdmin);
+$("adminPass").addEventListener("keydown", e => { if (e.key === "Enter") tryAdmin(); });
+
+let deviceId = store.get("cata_device");
+if (!deviceId) { deviceId = (crypto.randomUUID?.() || String(Math.random()).slice(2) + Date.now()); store.set("cata_device", deviceId); }
+
+let me = store.get("cata_me");
+let claims = {};          // id -> {device, wine}
+let votes = [];           // [{voter, target, score, msg}]
+let revealed = false;
+let current = null;       // vino que se vota ahora
+let presented = [];       // vinos ya presentados, en orden
+let loaded = { p:false, v:false, c:false };
+let draft = null;         // borrador del voto en curso
+let renderedKey = null;
+let candidate = null;     // admin: nombre sorteado pendiente de confirmar (solo lo ve el admin)
+let sheetId = null;       // ficha abierta
+
+function toast(msg = "Guardado ✓"){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1400); }
+const validVote = v => NAME[v.voter] && NAME[v.target] && v.voter !== v.target;
+const wineOf = id => claims[id]?.wine || "Vino sin nombre";
+const votesFor = id => votes.filter(v => validVote(v) && v.target === id);
+const myVote = target => votes.find(v => v.voter === me && v.target === target);
+const canSeeScores = () => revealed || isAdmin;
+const avgOf = vs => vs.length ? vs.reduce((s,v) => s + v.score, 0) / vs.length : null;
+
+/* ---------- Elegir identidad ---------- */
+function renderPick(){
+  $("peopleGrid").innerHTML = PEOPLE.map(p => {
+    const taken = !!claims[p.id]?.device;
+    return `<button data-pick="${p.id}" class="${taken?"taken":""}" ${taken?"disabled":""}>${esc(p.name)}${taken?"<small>ya ha entrado</small>":""}</button>`;
+  }).join("");
+}
+$("peopleGrid").addEventListener("click", async e => {
+  const btn = e.target.closest("[data-pick]"); if (!btn) return;
+  const id = btn.dataset.pick;
+  if (!confirm(`¿Seguro que eres ${NAME[id]}?\n\nEste móvil quedará vinculado a ${NAME[id]} y no podrás cambiarlo.`)) return;
+  btn.disabled = true;
+  try {
+    await runTransaction(db, async tx => {
+      const ref = doc(db, P, id), s = await tx.get(ref);
+      if (s.exists() && s.data().device && s.data().device !== deviceId) throw new Error("TAKEN");
+      tx.set(ref, { device: deviceId, claimedAt: serverTimestamp() }, { merge: true });
+    });
+    me = id; store.set("cata_me", id); route();
+  } catch (err) {
+    alert(err.message === "TAKEN" ? `${NAME[id]} ya ha entrado desde otro móvil. Si eres tú, avisa a Jon.` : "No se pudo conectar: " + err.message);
+    btn.disabled = false;
+  }
+});
+
+/* ---------- Tabs ---------- */
+function tab(which){
+  for (const t of ["Vote","Rank","Admin"]) {
+    $("tab"+t).classList.toggle("on", t.toLowerCase() === which);
+    $(t.toLowerCase()+"View").classList.toggle("hidden", t.toLowerCase() !== which);
+  }
+}
+$("tabVote").onclick = () => tab("vote");
+$("tabRank").onclick = () => tab("rank");
+$("tabAdmin").onclick = () => tab("admin");
+
+/* ---------- Tu vino ---------- */
+$("editWineBtn").addEventListener("click", async () => {
+  const w = prompt("¿Qué vino has traído?", claims[me]?.wine || "");
+  if (w === null) return;
+  await updateDoc(doc(db, P, me), { wine: w.trim().slice(0,50) }); toast();
+});
+
+/* ---------- Votar (solo el vino abierto) ---------- */
+function countText(){
+  const n = votesFor(current).length, full = n >= TOTAL - 1;
+  return `<div class="count ${full?"full":""}" id="vCount">${full ? `✅ ¡Han votado todos! (${n}/${TOTAL-1})` : `🗳️ ${n} de ${TOTAL-1} han votado`}</div>`;
+}
+function renderVoteNow(){
+  const v = current ? myVote(current) : null;
+  renderedKey = `${current}|${v?.score}|${v?.msg}|${current ? wineOf(current) : ""}`;
+  if (!current) {
+    $("voteNow").innerHTML = `<div class="card center"><div style="font-size:40px">⏸️</div>
+      <div class="name">Esperando al siguiente vino</div>
+      <div class="wine">Cuando Jon abra la votación, aparecerá aquí.</div></div>`;
+    return;
+  }
+  if (current === me) {
+    $("voteNow").innerHTML = `<div class="card center current"><div style="font-size:40px">🎤</div>
+      <div class="name">¡Ahora se presenta tu vino!</div>
+      <div class="wine">${esc(wineOf(me))} · No puedes votarte a ti mismo.</div>
+      ${countText()}
+      <button class="btn-sm ghost wide" data-sheet="${me}">💬 Ver lo que dicen de tu vino</button></div>`;
+    return;
+  }
+  if (!draft || draft.target !== current) draft = { target: current };
+  const val = draft.score ?? v?.score ?? 5, has = draft.touched || v;
+  const msg = draft.msg ?? v?.msg ?? "";
+  $("voteNow").innerHTML = `<div class="card current">
+    <span class="live">● VOTANDO AHORA</span>
+    <div class="row"><div><div class="name">${esc(NAME[current])}</div><div class="wine">${esc(wineOf(current))}</div>
+      ${v ? `<span class="badge">✓ Votado: ${fmt(v.score)}</span>` : ""}</div>
+      <div class="score ${has?"":"empty"}" id="vScore">${has?fmt(val):"–"}</div></div>
+    <input type="range" min="0" max="10" step="0.5" value="${val}" id="vRange">
+    <div class="ticks"><span>0</span><span>5</span><span>10</span></div>
+    <textarea id="vMsg" rows="2" maxlength="${MSG_MAX}" placeholder="¿Qué te ha parecido? (opcional, lo verá todo el mundo)">${esc(msg)}</textarea>
+    <button class="primary wide" id="vSave" ${has?"":"disabled"}>${v?"Actualizar voto":"Votar"}</button>
+    ${countText()}
+    <button class="btn-sm ghost wide" data-sheet="${current}">💬 Ver lo que dicen los demás</button></div>`;
+}
+$("voteNow").addEventListener("input", e => {
+  if (!draft) return;
+  if (e.target.id === "vRange") {
+    draft.score = parseFloat(e.target.value); draft.touched = true;
+    $("vScore").textContent = fmt(draft.score); $("vScore").classList.remove("empty");
+    $("vSave").disabled = false;
+  }
+  if (e.target.id === "vMsg") draft.msg = e.target.value;
+});
+$("voteNow").addEventListener("click", async e => {
+  if (e.target.id !== "vSave") return;
+  const target = current;
+  if (!target || target === me) return;
+  const score = Math.min(10, Math.max(0, parseFloat($("vRange").value)));
+  const msg = $("vMsg").value.trim().slice(0, MSG_MAX);
+  e.target.disabled = true;
+  try {
+    await setDoc(doc(db, V, `${me}__${target}`), { voter: me, target, score, msg, device: deviceId, updatedAt: serverTimestamp() });
+    draft = null; toast();
+  } catch (err) {
+    alert(current !== target ? "La votación de este vino se acaba de cerrar." : "Error al guardar: " + err.message);
+    e.target.disabled = false;
+  }
+});
+
+function renderHistory(){
+  const past = presented.filter(id => id !== me && id !== current);
+  $("historyBox").classList.toggle("hidden", !past.length);
+  $("historyList").innerHTML = past.map(id => {
+    const v = myVote(id);
+    return `<div class="hist tap" data-sheet="${id}"><span>${esc(NAME[id])} <span class="wine">· ${esc(wineOf(id))}</span></span>
+      <b>${v ? fmt(v.score) : "<span class='wine'>sin votar</span>"}</b></div>`;
+  }).join("");
+}
+
+/* ---------- Pestaña Vinos: lista o ranking ---------- */
+function renderRanking(){
+  $("adminPeek").classList.toggle("hidden", !(isAdmin && !revealed));
+  const ids = PEOPLE.map(p => p.id).filter(id => presented.includes(id) || id === current);
+  if (!ids.length) { $("rankList").innerHTML = `<div class="card center wine">Todavía no se ha presentado ningún vino.</div>`; return; }
+
+  // Ranking oculto: lista de vinos presentados (en orden de salida), sin notas
+  if (!canSeeScores()) {
+    const order = presented.filter(id => ids.includes(id));
+    if (current && !order.includes(current)) order.push(current);
+    $("rankList").innerHTML = `<div class="card center"><div style="font-size:32px">🤫</div>
+        <div class="name">El ranking se revelará al final</div>
+        <div class="wine">Toca un vino para leer lo que ha dicho la gente.</div></div>` +
+      order.map(id => {
+        const vs = votesFor(id), nMsg = vs.filter(v => v.msg).length;
+        return `<div class="card tap ${id===current?"current":""}" data-sheet="${id}">
+          <div class="row"><div><div class="name">${esc(NAME[id])}${id===me?" (tú)":""}</div><div class="wine">${esc(wineOf(id))}</div></div>
+          <div class="meta">${id===current?"🔴 ahora<br>":""}💬 ${nMsg}</div></div></div>`;
+      }).join("");
+    return;
+  }
+
+  // Ranking visible
+  const rows = ids.map(id => {
+    const vs = votesFor(id);
+    return { id, n: vs.length, avg: avgOf(vs), nMsg: vs.filter(v => v.msg).length };
+  }).sort((a,b) => (b.avg ?? -1) - (a.avg ?? -1) || b.n - a.n || NAME[a.id].localeCompare(NAME[b.id],"es"));
+
+  const medals = ["🥇","🥈","🥉"];
+  let pos = 0, prev;
+  $("rankList").innerHTML = rows.map((r,i) => {
+    if (r.avg !== null && r.avg !== prev) pos = i + 1;
+    prev = r.avg;
+    const label = r.avg === null ? "–" : (medals[pos-1] || pos);
+    return `<div class="card tap ${pos===1 && r.avg!==null ? "first":""}" data-sheet="${r.id}">
+      <div class="rank"><div class="pos">${label}</div>
+        <div style="flex:1;min-width:0">
+          <div class="row"><div class="name">${esc(NAME[r.id])}${r.id===me?" (tú)":""}</div>
+            <div class="score" style="font-size:24px">${r.avg===null?"–":fmt(r.avg)}</div></div>
+          <div class="wine">${esc(wineOf(r.id))}${r.id===current?" · votando ahora":""}</div>
+          <div class="meta">${r.n} ${r.n===1?"voto":"votos"} · 💬 ${r.nMsg}</div>
+          <div class="bar"><i style="width:${(r.avg??0)*10}%"></i></div>
+        </div></div></div>`;
+  }).join("");
+}
+
+/* ---------- Ficha de un vino: quién ha dicho qué ---------- */
+function renderSheet(){
+  if (!sheetId) { $("sheet").classList.add("hidden"); return; }
+  const vs = votesFor(sheetId).sort((a,b) => (b.msg ? 1 : 0) - (a.msg ? 1 : 0) || NAME[a.voter].localeCompare(NAME[b.voter],"es"));
+  const show = canSeeScores(), avg = avgOf(vs);
+  const list = vs.filter(v => v.msg || show);
+  $("sheetPanel").innerHTML = `
+    <div class="row"><div><div class="name" style="font-size:22px">${esc(NAME[sheetId])}</div><div class="wine">${esc(wineOf(sheetId))}</div></div>
+      ${show && avg !== null ? `<div class="score">${fmt(avg)}</div>` : ""}</div>
+    <div class="meta" style="margin:6px 0 10px">${vs.length} ${vs.length===1?"voto":"votos"}${show ? "" : " · las notas se verán al revelar el ranking"}</div>
+    <div class="card">${list.length ? list.map(v => `<div class="msg">
+        <div class="row"><b>${esc(NAME[v.voter])}</b>${show ? `<b>${fmt(v.score)}</b>` : ""}</div>
+        ${v.msg ? `<div class="txt">“${esc(v.msg)}”</div>` : ""}</div>`).join("")
+      : `<div class="wine center">Nadie ha escrito nada todavía.</div>`}</div>
+    <button class="ghost wide" id="sheetClose">Cerrar</button>`;
+  $("sheet").classList.remove("hidden");
+}
+document.addEventListener("click", e => {
+  const s = e.target.closest("[data-sheet]");
+  if (s) { sheetId = s.dataset.sheet; renderSheet(); return; }
+  if (e.target.id === "sheetClose" || e.target.id === "sheet") { sheetId = null; renderSheet(); }
+});
+
+/* ---------- Admin ---------- */
+function renderAdmin(){
+  if (!isAdmin) return;
+  const valid = votes.filter(validVote);
+  const pending = PEOPLE.filter(p => !presented.includes(p.id) && p.id !== current);
+  if (candidate && !pending.some(p => p.id === candidate)) candidate = null;
+
+  const n = current ? votesFor(current).length : 0, full = n >= TOTAL - 1;
+  const nowHtml = current
+    ? `<span class="live">● VOTANDO AHORA</span>
+       <div class="name">${esc(NAME[current])}</div><div class="wine">${esc(wineOf(current))}</div>
+       <div class="big" style="margin-top:8px;${full?"color:var(--ok)":""}">${n}/${TOTAL-1}</div>
+       <div class="wine">${full ? "✅ ¡Han votado todos!" : "han votado"}</div>`
+    : `<div class="name">Votación cerrada</div>
+       <div class="wine">${presented.length} de ${TOTAL} vinos presentados</div>`;
+
+  const candHtml = candidate
+    ? `<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+         <div class="wine">🎲 Ha salido…</div>
+         <div class="cand">${esc(NAME[candidate])}</div>
+         <div class="wine">${claims[candidate]?.device ? "" : "⚠️ todavía no ha entrado en la app"}</div>
+         <div class="actions">
+           <button class="btn-sm primary" data-confirm>✅ Confirmar y abrir</button>
+           ${pending.length > 1 ? `<button class="btn-sm ghost" data-random>🎲 Otra vez</button>` : ""}
+           <button class="btn-sm ghost" data-cancel>✕</button>
+         </div></div>`
+    : `<div class="actions" style="margin-top:14px">
+         ${current ? `<button class="btn-sm ghost" data-close>⏹ Cerrar</button>` : ""}
+         ${pending.length ? `<button class="btn-sm ${full||!current?"primary":"ghost"}" data-random>🎲 ${current ? "Siguiente al azar" : "Sortear siguiente vino"}</button>`
+                          : `<span class="wine">¡Ya se han presentado todos! 🎉</span>`}
+       </div>
+       <div class="meta" style="margin-top:8px">También puedes elegir cuál abrir en la lista de abajo.</div>`;
+  $("adminNow").innerHTML = nowHtml + candHtml;
+
+  const connected = PEOPLE.filter(p => claims[p.id]?.device).length;
+  $("adminCount").textContent = `${connected}/${TOTAL}`;
+  $("adminVotes").textContent = `${new Set(valid.map(v => v.voter)).size} han votado · ${valid.length} notas en total`;
+  $("revealBtn").textContent = revealed ? "🙈 Ocultar ranking" : "🎉 Revelar ranking a todos";
+
+  $("adminList").innerHTML = PEOPLE.map(p => {
+    const on = !!claims[p.id]?.device;
+    const isCur = p.id === current, done = presented.includes(p.id);
+    const status = isCur ? "🔴 votando ahora" : done ? `✓ presentado · ${votesFor(p.id).length} votos` : "pendiente";
+    return `<div class="arow"><div style="min-width:0">
+        <div style="font-weight:600">${on?"✅":"⏳"} ${esc(p.name)}</div>
+        <div class="meta">${status}${on ? "" : " · sin entrar"}</div></div>
+      <div class="btns">
+        ${isCur ? "" : `<button class="btn-sm ${done?"ghost":"primary"}" data-open="${p.id}">${done?"Reabrir":"▶ Abrir"}</button>`}
+        ${on && p.id !== me ? `<button class="btn-sm ghost" data-release="${p.id}">Liberar</button>` : ""}
+      </div></div>`;
+  }).join("");
+}
+
+async function openWine(id, skipConfirm = false){
+  if (!skipConfirm && current && current !== id && !confirm(`Se cerrará la votación de ${NAME[current]} y se abrirá la de ${NAME[id]}. ¿Seguir?`)) return;
+  await setDoc(STATE, { current: id, presented: arrayUnion(id) }, { merge: true });
+  toast(`Votando: ${NAME[id]}`);
+}
+$("adminView").addEventListener("click", async e => {
+  const t = e.target;
+  if (t.matches("[data-close]")) { await setDoc(STATE, { current: null }, { merge: true }); toast("Votación cerrada"); }
+  if (t.matches("[data-random]")) {
+    // Sortea un candidato; no se abre hasta que confirmes
+    let pool = PEOPLE.filter(p => !presented.includes(p.id) && p.id !== current);
+    if (pool.length > 1 && candidate) pool = pool.filter(p => p.id !== candidate);
+    candidate = pool.length ? pool[Math.floor(Math.random() * pool.length)].id : null;
+    renderAdmin();
+  }
+  if (t.matches("[data-cancel]")) { candidate = null; renderAdmin(); }
+  if (t.matches("[data-confirm]") && candidate) { const id = candidate; candidate = null; await openWine(id, true); }
+  if (t.dataset.open) await openWine(t.dataset.open);
+  if (t.dataset.release) {
+    const id = t.dataset.release;
+    if (!confirm(`¿Liberar el nombre de ${NAME[id]}? El móvil que lo usa quedará desconectado.`)) return;
+    const wipe = confirm(`¿Borrar también los votos emitidos como ${NAME[id]}?\n\nAceptar = borrar sus votos · Cancelar = conservarlos`);
+    const b = writeBatch(db);
+    b.set(doc(db, P, id), { device: null }, { merge: true });
+    if (wipe) votes.filter(v => v.voter === id).forEach(v => b.delete(doc(db, V, `${v.voter}__${v.target}`)));
+    await b.commit(); toast("Nombre liberado");
+  }
+});
+$("revealBtn").addEventListener("click", async () => {
+  if (!revealed && !confirm("¿Revelar el ranking y las notas a todo el mundo?")) return;
+  await setDoc(STATE, { revealed: !revealed }, { merge: true });
+});
+$("resetBtn").addEventListener("click", async () => {
+  if (prompt("Esto borra participantes, votos y el orden de vinos. Escribe BORRAR para confirmar") !== "BORRAR") return;
+  await setDoc(STATE, { revealed: false, current: null, presented: [] });
+  for (const c of [V, P]) {
+    const snap = await getDocs(collection(db, c));
+    for (let i = 0; i < snap.docs.length; i += 400) {
+      const b = writeBatch(db); snap.docs.slice(i, i+400).forEach(d => b.delete(d.ref)); await b.commit();
+    }
+  }
+  toast("Todo borrado");
+});
+
+/* ---------- Tiempo real ---------- */
+const fail = err => { $("subtitle").textContent = "Error de conexión: " + err.message; };
+onSnapshot(collection(db, P), snap => {
+  claims = {}; snap.forEach(d => claims[d.id] = d.data());
+  loaded.p = true; route();
+}, fail);
+onSnapshot(collection(db, V), snap => {
+  votes = []; snap.forEach(d => votes.push(d.data()));
+  loaded.v = true; route();
+}, fail);
+onSnapshot(STATE, snap => {
+  const d = snap.exists() ? snap.data() : {};
+  revealed = d.revealed === true;
+  current = NAME[d.current] ? d.current : null;
+  presented = (d.presented || []).filter(id => NAME[id]);
+  loaded.c = true; route();
+}, fail);
+
+/* ---------- Router ---------- */
+function route(){
+  if (!loaded.p || !loaded.v || !loaded.c) return;
+  if (me && (!NAME[me] || claims[me]?.device !== deviceId)) { me = null; store.set("cata_me", null); }
+  const logged = !!me;
+  $("adminLogin").classList.toggle("hidden", isAdmin);
+  $("pickView").classList.toggle("hidden", logged);
+  $("appView").classList.toggle("hidden", !logged);
+  if (!logged) { $("subtitle").textContent = "Elige tu nombre para entrar"; renderPick(); renderedKey = null; sheetId = null; renderSheet(); return; }
+  $("subtitle").textContent = `Hola, ${NAME[me]}${isAdmin ? " · admin" : ""}`;
+  $("tabAdmin").classList.toggle("hidden", !isAdmin);
+  $("myWine").textContent = claims[me]?.wine || "Sin nombre (pulsa Editar)";
+  // La tarjeta de voto solo se repinta si cambia el vino abierto o tu voto,
+  // para no perder lo que estás escribiendo cuando votan los demás
+  const v = current ? myVote(current) : null;
+  const key = `${current}|${v?.score}|${v?.msg}|${current ? wineOf(current) : ""}`;
+  if (key !== renderedKey) renderVoteNow();
+  else if ($("vCount")) $("vCount").outerHTML = countText();
+  renderHistory(); renderRanking(); renderAdmin(); renderSheet();
+}
+</script>
+</body>
+</html>
